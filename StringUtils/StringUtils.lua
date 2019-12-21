@@ -190,63 +190,6 @@ string.replace = function(s, ori, new)
 end
 
 
----
---- 解析json形式的goto， 三段式goto原样返回
----
----@param gotoStr string
----@return Map
----
-string.analysisGoto = function(gotoStr)
-    if type(gotoStr) == "string" and string.len(gotoStr) > 0 then
-        if string.match(gotoStr, '%[.*|.*%]') then
-            return gotoStr
-        end
-
-        -- 多写个字符串分割方法，减少字符串拼接
-        local function __xxsplit(str, pat)
-            local tb = {}
-            string.gsub(str, pat, function(w)
-                table.insert(tb, w)
-            end )
-            return tb
-        end
-
-        local tmp = StringUtil:jsonToMap(gotoStr) or Map()
-        local m = tmp:get("m") or Map()
-        local prm = m:get("prm")
-
-        if type(prm) == "string" then
-            prm = StringUtil:jsonToMap(prm)
-            if TypeUtils:isMap(prm) then
-                local url = prm:get("url")
-                if url then
-                    local urlParam = Map()
-                    local urlSeg = __xxsplit(url, "[^?]+")
-
-                    if #urlSeg > 1 then
-                        local paramString = urlSeg[2]
-                        local paramSeg = __xxsplit(paramString, "[^&]+")
-                        for i = 1, #paramSeg do
-                            local p = paramSeg[i]
-                            local kv = __xxsplit(p, "[^=]+")
-                            if #kv > 1 then
-                                urlParam:put(kv[1], kv[2])
-                            end
-                        end
-                    end
-
-                    prm:put("urlParams", urlParam)
-                end
-                m:put("prm", prm)
-            end
-        end
-
-        return tmp
-    end
-
-    print("gotoStr not correct !!!", gotoStr)
-    return Map()
-end
 
 
 ---- string元表修改 ----
@@ -275,14 +218,14 @@ end
 --- 除法
 string.__div = function(s, num)
     local a = tonumber(s) or 0
-    local b = tonumber(num) or 0
+    local b = tonumber(num) or 1
     return a / b
 end
 
 --- 取余
 string.__mod = function(s, num)
     local a = tonumber(s) or 0
-    local b = tonumber(num) or 0
+    local b = tonumber(num) or 1
     return a % b
 end
 
@@ -302,8 +245,8 @@ end
 --- 除法，结果向下取整
 string.__idiv = function(s, num)
     local a = tonumber(s) or 0
-    local b = tonumber(num) or 0
-    return a // b
+    local b = tonumber(num) or 1
+    return a // 1
 end
 
 --- 链接操作，处理nil值报错
