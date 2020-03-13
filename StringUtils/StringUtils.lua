@@ -246,7 +246,7 @@ end
 string.__idiv = function(s, num)
     local a = tonumber(s) or 0
     local b = tonumber(num) or 1
-    return a // 1
+    return math.floor(a / b)
 end
 
 --- 链接操作，处理nil值报错
