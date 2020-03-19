@@ -180,30 +180,6 @@ local function __functionRep(_,userdataView, name)
                 return __SUPER_VIEW[t]
             end
         until(1)
-
-        -- 给ImageView添加方法
-        repeat
-            if mt["image"] == nil or mt["avatar"] ~= nil then return end
-            mt["avatar"] = function(t, url, isBigPhoto)
-                if type(url) ~= "string" then
-                    print("avatar url is not string:", url)
-                    return t
-                else
-                    if string.match(url, "http") == "http" then
-                        mt["image"](t, url)
-                    else
-                        local prefix = "https://img.momocdn.com/album/"
-                        local tail = "_S.jpg"
-                        if isBigPhoto then
-                            tail = "_L.jpg"
-                        end
-                        url = table.concat({prefix, string.sub(url, 1, 2), "/", string.sub(url, 3, 4), "/", url, tail})
-                        mt["image"](t, url)
-                    end
-                    return t
-                end
-            end
-        until(1)
     until(1)
 end
 

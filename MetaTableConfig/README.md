@@ -1,6 +1,6 @@
 ### Metatable元表修改
 
-主要对`window`，`View`，`Label`，`EditTextView`，`LinearLayout`，`AnimationZone`，`ImageView`的原表进行修改
+主要对`window`，`View`，`Label`，`EditTextView`，`LinearLayout`，`AnimationZone`的原表进行修改
 
 - 新增的方法：
 
@@ -39,10 +39,7 @@ function superView()    end
 function allSubviews()  end     
 
 -- 支持连续添加多个子view
-function addViews(...)  end     
-
--- 给image view设置短链地址，设置短链头像一步搞定
-function avatar(string) end     
+function addViews(...)  end      
 
 ```
 
