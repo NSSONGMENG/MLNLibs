@@ -196,31 +196,7 @@ local function __functionRep(_,userdataView, name)
             mt["superview"] = function(t)
                 return __SUPER_VIEW[t]
             end
-        until(1)
-
-        -- 给ImageView添加方法
-        repeat
-            if mt["image"] == nil or mt["avatar"] ~= nil then return end
-            mt["avatar"] = function(t, url, isBigPhoto)
-                if type(url) ~= "string" then
-                    print("avatar url is not string:", url)
-                    return t
-                else
-                    if string.match(url, "http") == "http" then
-                        mt["image"](t, url)
-                    else
-                        local prefix = "https://img.momocdn.com/album/"
-                        local tail = "_S.jpg"
-                        if isBigPhoto then
-                            tail = "_L.jpg"
-                        end
-                        url = table.concat({prefix, string.sub(url, 1, 2), "/", string.sub(url, 3, 4), "/", url, tail})
-                        mt["image"](t, url)
-                    end
-                    return t
-                end
-            end
-        until(1)
+        until(1)        
     until(1)
 end
 
@@ -325,3 +301,76 @@ function replace_lua_method(class,oriFuncName, newFunc)
     class[oriFuncName] = newFunc
     return true
 end
+
+
+
+
+---
+--- window方法替换，支持多次设置callback回调，目前仅支持
+---
+local function windowFix()
+    local mt = getmetatable(window)
+    if type(mt) ~= "table" then return end
+
+    mt.onDestroyTable = {}
+    mt.viewAppearTable = {}
+    mt.viewDisappearTable = {}
+
+    --- onDestroy
+    local oriDestroy = mt["onDestroy"]
+    --- 修改onDestroy实现，保存设置的callback
+    mt["onDestroy"] = function(_, func)
+        if type(func) == "function" then
+            table.insert(window.onDestroyTable, func)
+        end
+    end
+    --- 设置onDestroy callback，实现事件分发
+    if type(oriDestroy) == "function" then
+        oriDestroy(window, function()
+            for _, f in ipairs(window.onDestroyTable) do
+                if type(f) == "function" then f() end
+            end
+        end)
+    else
+        local time = PreferenceUtils:get("vchat_low_version_alert", "0")
+        if os.time() - tonumber(time) > 3600 * 2 then
+            Toast("当前版本过低，为了您更好的体验，请及时升级", kToastTime, 1)
+            PreferenceUtils:save("vchat_low_version_alert", tostring(os.time()))
+        end
+    end
+
+    --- viewAppear
+    local oriAppear = mt["viewAppear"]
+    --- 修改viewAppear实现，保存设置的callback
+    mt["viewAppear"] = function(_, func)
+        if type(func) == "function" then
+            table.insert(window.viewAppearTable, func)
+        end
+    end
+    --- 设置viewAppear callback，实现事件分发
+    if type(oriAppear) == "function" then
+        oriAppear(window, function()
+            for _, f in ipairs(window.viewAppearTable) do
+                if type(f) == "function" then f() end
+            end
+        end)
+    end
+
+    --- viewDisappear
+    local oriDisappear = mt["viewDisappear"]
+    --- 修改viewDisappear实现，保存设置的callback
+    mt["viewDisappear"] = function(_, func)
+        if type(func) == "function" then
+            table.insert(window.viewDisappearTable, func)
+        end
+    end
+    --- 设置viewDisappear callback，实现事件分发
+    if type(oriDisappear) == "function" then
+        oriDisappear(window, function()
+            for _, f in ipairs(window.viewDisappearTable) do
+                if type(f) == "function" then f() end
+            end
+        end)
+    end
+end
+windowFix()

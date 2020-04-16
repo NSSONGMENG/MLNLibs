@@ -273,3 +273,96 @@ string.endsWith = function(str, pattern)
     end
     return string.match(str, pattern .. "$") ~= nil
 end
+
+----------------- utf 8 --------------
+
+
+local pattern = '[%z\1-\127\194-\244][\128-\191]*'
+local utf8 = {}
+---
+--- 遍历utf-8字符【辅助函数】
+---
+---@param s string  待操作字符串
+---@param f thread  coroutine对象
+---@param is_char   boolean 是否回调字符
+---
+utf8.map = function (s, f, is_char)
+    local i = 0
+
+    if is_char then
+        -- 遍历每个utf-8字符，c为每个utf-8字符
+        for b, c in s:gmatch('()(' .. pattern .. ')') do
+            i = i + 1
+            -- utf-8字符索引，字符起始位置，字符终止位置
+            f(i, c, b)
+        end
+    else
+        -- 每个utf-8字符的起止位置
+        for b, e in s:gmatch('()' .. pattern .. '()') do
+            i = i + 1
+            local c = e - b
+            -- utf-8字符索引，字符，字符终止位置
+            f(i, c, b)
+        end
+    end
+end
+
+---
+--- 返回遍历所有utf-8字符的函数，该函数每次回调递进一个utf-8字符
+---
+---@param   s   string          待操作字符串
+---@param   is_char boolean     是否回调字符
+---@return  fun
+---
+utf8.chars = function (s, is_char)
+    return coroutine.wrap(function ()
+        return utf8.map(s, coroutine.yield, is_char)
+    end)
+end
+
+---0
+--- 返回utf-8字符串长度
+---
+string.utf8_len = function (s)
+    return select(2, s:gsub('[^\128-\193]', ''))
+end
+
+---
+--- 倒置utf-8字符串
+---
+string.utf8_reverse = function (s)
+    s = s:gsub(pattern, function (c) return #c > 1 and c:reverse() end)
+    return s:reverse()
+end
+
+---
+--- 根据字符起始位获取utf-8子字符串
+---
+---@param   s   string
+---@param   i   number  字符起始位置
+---@param   j   number  字符终止位置
+---@return  string
+string.utf8_sub = function (s, i, j)
+    local l = string.utf8_len(s)
+
+    j = j or l
+    if i < 0 then   i = i + l + 1 end
+    if j < 0 then   j = j + l + 1 end
+
+    if i < 1 then i = 1 end
+    if j > l then j = l end
+
+    if i > j then return '' end
+
+    local iter = utf8.chars(s, true)
+
+    local tmp = {}
+    for idx = 1, j do
+        local _, char = iter()
+        if idx >= i then
+            table.insert(tmp, char)
+        end
+    end
+
+    return table.concat(tmp)
+end
